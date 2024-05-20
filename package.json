@@ -1,0 +1,22 @@
+{
+  "name": "secrethash-finder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/yargs": "^17.0.32",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "ethers": "^5.5.4",
+    "yargs": "^17.7.2"
+  }
+}
