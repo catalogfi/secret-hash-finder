@@ -15,8 +15,12 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@types/node": "^20.14.9",
+    "bitcoinjs-lib": "^6.1.6",
     "crypto": "^1.0.1",
+    "ecpair": "^2.1.0",
     "ethers": "^5.5.4",
+    "tiny-secp256k1": "^2.2.3",
     "yargs": "^17.7.2"
   }
 }

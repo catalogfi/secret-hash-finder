@@ -2,6 +2,9 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { ethers, Wallet } from 'ethers';
 import { createHash } from "crypto";
+import * as bitcoin from "bitcoinjs-lib";
+import { ECPairFactory } from "ecpair";
+import * as ecc from "tiny-secp256k1";
 
 function hashString(inputString: string) {
     const sha256Hash = createHash("sha256");
@@ -13,7 +16,7 @@ function hashString(inputString: string) {
 async function computeSecrets(
     nonce: number,
     wallet: Wallet
-): Promise<{secret:string, secretHash: string}> {
+): Promise<{secret:string, secretHash: string, privateKey: string, aliceBTCAddress: string}> {
     //TODO: reafactor this function and enable backward compatibility for the old version where we pass chainId in the typed data
     const types = {
         Data: [
@@ -53,9 +56,20 @@ async function computeSecrets(
 
     const secretHash = ethers.utils.sha256(`0x${secret}`);
 
+    const signer = ECPairFactory(ecc).fromPrivateKey(
+        Buffer.from(privateKey, "hex")
+    );
+
+    const aliceBTCAddress = bitcoin.payments.p2pkh({
+        pubkey: signer.publicKey,
+        network: bitcoin.networks.bitcoin,
+    }).address as string;
+
     return {
         secret,
         secretHash,
+        aliceBTCAddress,
+        privateKey
     };
 }
 
@@ -99,9 +113,10 @@ yargs(hideBin(process.argv))
                 console.log(`Trying with: ${wallet.address}`);
 
                 for (let nonce = maximumNonce; nonce > 0; nonce--) {
-                    const { secret, secretHash } = await computeSecrets(nonce, wallet);
-
-                    if (secretHash.toLowerCase() === (argv.secretHash as string).toLowerCase()) {
+                    const { secret, secretHash, privateKey, aliceBTCAddress } = await computeSecrets(nonce, wallet);
+                    
+                    if (aliceBTCAddress.toLowerCase() === (argv.secretHash as string).toLowerCase()) {
+                        console.log('OTA Key: ', privateKey);
                         console.log(`Found secret for nonce ${nonce}\nsecret: ${secret}`);
                         console.log(`account: ${wallet.address}`);
 

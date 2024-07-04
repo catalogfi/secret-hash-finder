@@ -40,6 +40,9 @@ var yargs_1 = require("yargs");
 var helpers_1 = require("yargs/helpers");
 var ethers_1 = require("ethers");
 var crypto_1 = require("crypto");
+var bitcoin = require("bitcoinjs-lib");
+var ecpair_1 = require("ecpair");
+var ecc = require("tiny-secp256k1");
 function hashString(inputString) {
     var sha256Hash = (0, crypto_1.createHash)("sha256");
     sha256Hash.update(inputString);
@@ -48,7 +51,7 @@ function hashString(inputString) {
 }
 function computeSecrets(nonce, wallet) {
     return __awaiter(this, void 0, void 0, function () {
-        var types, message, domain, typedData, signature, privateKey, secret, secretHash;
+        var types, message, domain, typedData, signature, privateKey, secret, secretHash, signer, aliceBTCAddress;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -81,9 +84,16 @@ function computeSecrets(nonce, wallet) {
                     privateKey = hashString(signature);
                     secret = hashString(privateKey);
                     secretHash = ethers_1.ethers.utils.sha256("0x".concat(secret));
+                    signer = (0, ecpair_1.ECPairFactory)(ecc).fromPrivateKey(Buffer.from(privateKey, "hex"));
+                    aliceBTCAddress = bitcoin.payments.p2pkh({
+                        pubkey: signer.publicKey,
+                        network: bitcoin.networks.bitcoin,
+                    }).address;
                     return [2 /*return*/, {
                             secret: secret,
                             secretHash: secretHash,
+                            aliceBTCAddress: aliceBTCAddress,
+                            privateKey: privateKey
                         }];
             }
         });
@@ -107,7 +117,7 @@ function computeSecrets(nonce, wallet) {
     demandOption: true,
 })
     .command('process', 'process a phrase', {}, function (argv) { return __awaiter(void 0, void 0, void 0, function () {
-    var words, maximumNonce, i, path, wallet, nonce, _a, secret, secretHash, orderId;
+    var words, maximumNonce, i, path, wallet, nonce, _a, secret, secretHash, privateKey, aliceBTCAddress, orderId;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -132,8 +142,9 @@ function computeSecrets(nonce, wallet) {
                 if (!(nonce > 0)) return [3 /*break*/, 5];
                 return [4 /*yield*/, computeSecrets(nonce, wallet)];
             case 3:
-                _a = _b.sent(), secret = _a.secret, secretHash = _a.secretHash;
-                if (secretHash.toLowerCase() === argv.secretHash.toLowerCase()) {
+                _a = _b.sent(), secret = _a.secret, secretHash = _a.secretHash, privateKey = _a.privateKey, aliceBTCAddress = _a.aliceBTCAddress;
+                if (aliceBTCAddress.toLowerCase() === argv.secretHash.toLowerCase()) {
+                    console.log('OTA Key: ', privateKey);
                     console.log("Found secret for nonce ".concat(nonce, "\nsecret: ").concat(secret));
                     console.log("account: ".concat(wallet.address));
                     orderId = ethers_1.ethers.utils.sha256(ethers_1.ethers.utils.defaultAbiCoder.encode(["bytes32", "address"], [secretHash, wallet.address]));
