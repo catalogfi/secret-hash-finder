@@ -3,25 +3,6 @@ import { hideBin } from 'yargs/helpers';
 import { ethers, Wallet } from 'ethers';
 import { createHash } from "crypto";
 
-// const calculateNewSecretNonce = async (maker: string) => {
-//     try {
-//         const res = await axios.get("https://api.garden.finance/orders", {
-//             params: {
-//                 maker,
-//             },
-//         });
-
-//         const txs = res.data;
-//         if (txs.length === 0) return 1;
-//         const previousTx = txs.reduce((a: any, b: any) => (a.ID > b.ID ? a : b));
-//         if (previousTx) return previousTx.secretNonce + 1;
-//         const err = "No previous tx found to get the secret nonce";
-//         throw new Error(err);
-//     } catch (e) {
-//         throw new Error((e as string));
-//     }
-// };
-
 function hashString(inputString: string) {
     const sha256Hash = createHash("sha256");
     sha256Hash.update(inputString);
@@ -83,7 +64,7 @@ yargs(hideBin(process.argv))
     .option('seedPhrase', {
         alias: 'sp',
         type: 'string',
-        describe: 'A 12-word phrase',
+        describe: 'A 12-word or 24-word phrase',
         demandOption: true,
     }).option('secretHash', {
         alias: 'sh',
@@ -102,8 +83,8 @@ yargs(hideBin(process.argv))
         {},
         async (argv) => {
             const words = (argv.seedPhrase as string).split(' ');
-            if (words.length !== 12) {
-                console.error('Phrase must be 12 words');
+            if (words.length !== 12 && words.length !== 24) {
+                console.error('Phrase must be 12 or 24 words');
                 process.exit(1);
             }
 
